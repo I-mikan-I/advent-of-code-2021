@@ -2,6 +2,10 @@
 
 Programs to calculate solutions for the [Advent of Code](https://adventofcode.com/2021/about) challenges.
 
+Most of the binaries just __panic!__ 😱 instead of implementing correct error handling
+when the input is not as expected, so you might need to look into the source code to figure out what's wrong with your
+input.
+
 ## Build
 
 Each daily solution comes in the form of its own binary, which can be built using
