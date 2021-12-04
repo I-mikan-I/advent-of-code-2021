@@ -40,7 +40,7 @@ impl BingoBoard {
         self.row_count
             .iter()
             .chain(self.column_count.iter())
-            .any(|&count| count as usize == BOARD_SIZE)
+            .any(|&count| count == BOARD_SIZE)
     }
     fn score(&self) -> Option<usize> {
         if !self.has_won() {
@@ -136,14 +136,13 @@ fn ex_02(commands: &[u8], boards: &[BingoBoard]) -> Option<usize> {
     let mut boards = Vec::from(boards);
     for &c in commands {
         boards = boards
-            .iter()
+            .into_iter()
             .filter(|board| !board.has_won())
-            .cloned()
             .collect();
         boards.iter_mut().for_each(|board| board.mark(c));
         if boards.len() == 1 && boards[0].has_won() {
-            let winner = &boards[0];
-            return winner.score().map(|s| s * c as usize);
+            let loser = &boards[0];
+            return loser.score().map(|s| s * c as usize);
         }
     }
     None
