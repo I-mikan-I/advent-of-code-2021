@@ -119,12 +119,7 @@ fn oxygen(nums: &[usize]) -> usize {
 fn filter_vitals(nums: &[usize], agg_filter: impl Fn(&Binary) -> usize) -> usize {
     let mut nums = Vec::from(nums);
     for i in (0..BIT_SIZE).rev() {
-        let gamma = agg_filter(
-            &nums
-                .iter()
-                .map(Into::into)
-                .sum::<Binary>(),
-        );
+        let gamma = agg_filter(&nums.iter().map(Into::into).sum::<Binary>());
         let filter_bit = gamma & (1 << i);
         nums = nums
             .into_iter()
