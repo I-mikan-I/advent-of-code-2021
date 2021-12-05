@@ -21,10 +21,12 @@ fn ex_01(input: &str) {
 
 fn ex_02(input: &str) {
     let result = map_vents(input, diagonal_generator);
-    println!("Ignoring diagonals, there are {} dangerous areas!", result)
+    println!("Including diagonals, there are {} dangerous areas!", result)
 }
+
 type CoordinateGenerator =
     fn([i32; 2], [i32; 2], bool) -> (Box<dyn Iterator<Item = i32>>, Box<dyn Iterator<Item = i32>>);
+
 fn map_vents(input: &str, diagonal_generator: CoordinateGenerator) -> usize {
     let mut counts: HashMap<(i32, i32), i32> = HashMap::new();
     let endpoints: Vec<_> = input
