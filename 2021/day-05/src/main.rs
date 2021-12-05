@@ -76,8 +76,7 @@ fn map_vents(input: &str, diagonal_generator: CoordinateGenerator) -> usize {
                 )
             };
 
-        for n in iter.zip(other_iter) {
-            let field = n;
+        for field in iter.zip(other_iter) {
             let old_count = *counts.get(&field).unwrap_or(&0);
             counts.insert(field, old_count + 1);
         }
