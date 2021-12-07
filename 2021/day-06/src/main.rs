@@ -26,7 +26,7 @@ fn main() {
 
 fn fish_simulation(contents: &[u8], days: usize) -> usize {
     let mut current_state = [0_usize; 9];
-    let mut next_state = current_state.clone();
+    let mut next_state = current_state;
 
     for i in contents {
         current_state[*i as usize] += 1;
@@ -44,5 +44,5 @@ fn fish_simulation(contents: &[u8], days: usize) -> usize {
         current_state = next_state;
         next_state = [0_usize; 9];
     }
-    return current_state.into_iter().sum();
+    current_state.into_iter().sum()
 }
