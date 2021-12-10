@@ -1,8 +1,5 @@
-use crate::ChunkDelimiter::{
-    AnBegin, AnClose, BrBegin, BrClose, CrBegin, CrClose, SqBegin, SqClose,
-};
+use crate::ChunkDelimiter::*;
 use std::path::Path;
-use std::str::FromStr;
 
 fn main() {
     let path = if let Some(x) = std::env::args().nth(1) {
@@ -66,18 +63,18 @@ impl ChunkDelimiter {
     }
 }
 
-impl FromStr for ChunkDelimiter {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "(" => Ok(BrBegin),
-            ")" => Ok(BrClose),
-            "{" => Ok(CrBegin),
-            "}" => Ok(CrClose),
-            "[" => Ok(SqBegin),
-            "]" => Ok(SqClose),
-            "<" => Ok(AnBegin),
-            ">" => Ok(AnClose),
+impl TryFrom<char> for ChunkDelimiter {
+    type Error = ();
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            '(' => Ok(BrBegin),
+            ')' => Ok(BrClose),
+            '{' => Ok(CrBegin),
+            '}' => Ok(CrClose),
+            '[' => Ok(SqBegin),
+            ']' => Ok(SqClose),
+            '<' => Ok(AnBegin),
+            '>' => Ok(AnClose),
             _ => Err(()),
         }
     }
@@ -89,7 +86,7 @@ fn solve_challenges(lines: &str) -> (usize, usize) {
     'line_loop: for line in lines.lines() {
         let mut stack: Vec<ChunkDelimiter> = Vec::with_capacity(100);
         for c in line.chars() {
-            let delim = ChunkDelimiter::from_str(&c.to_string()).expect("unknown character");
+            let delim = ChunkDelimiter::try_from(c).expect("unknown character");
             let to_pop = match delim {
                 BrClose | CrClose | SqClose | AnClose => Some(delim.partner()),
                 _ => None,
