@@ -24,19 +24,16 @@ fn main() {
 struct Cave<'a> {
     name: &'a str,
     large: bool,
-    next: Vec<Rc<RefCell<Cave<'a>>>>,
     previous: Vec<Weak<RefCell<Cave<'a>>>>,
 }
 
 impl<'a> Cave<'a> {
     fn new(s: &'a str) -> Result<Cave<'a>, ()> {
         let large = s.chars().all(char::is_uppercase);
-        let next = Vec::new();
         let previous = Vec::new();
         let name = s.trim();
         Ok(Self {
             large,
-            next,
             previous,
             name,
         })
@@ -71,7 +68,7 @@ fn challenge(input: &str) -> (usize, usize) {
             .get(key_e)
             .cloned()
             .unwrap_or_else(|| Rc::new(RefCell::new(end)));
-        start.borrow_mut().next.push(Rc::clone(&end));
+        start.borrow_mut().previous.push(Rc::downgrade(&end));
         end.borrow_mut().previous.push(Rc::downgrade(&start));
         lookup_table.insert(key_s, start);
         lookup_table.insert(key_e, end);
@@ -124,7 +121,7 @@ fn count_paths_rec(
         }
     } else {
         let prev_iter = cave.previous.iter().filter_map(Weak::upgrade);
-        let to_visit = cave.next.iter().cloned().chain(prev_iter).filter(|cave| {
+        let to_visit = prev_iter.filter(|cave| {
             (cave.deref()).borrow().large || !visited.contains(&cave.deref().borrow().name)
         });
         to_visit.map(visit_fn).sum()
