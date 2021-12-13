@@ -87,8 +87,8 @@ fn fold_up(paper: &mut Vec<Vec<bool>>, line: usize) {
     for y in 0..line + 1 {
         if paper.len() > line + y {
             paper[line - y] = zip_booleans(
-                paper[line - y].iter().copied(),
-                paper[line + y].iter().copied(),
+                std::mem::take(&mut paper[line - y]).into_iter(),
+                std::mem::take(&mut paper[line + y]).into_iter(),
             );
         } else {
             break;
