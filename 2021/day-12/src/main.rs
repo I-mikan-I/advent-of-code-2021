@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use std::path::Path;
 use std::rc::{Rc, Weak};
@@ -56,7 +57,6 @@ fn challenge(input: &str) -> (usize, usize) {
                 .unwrap()
         })
         .collect();
-
     for pair in map {
         let [start, end] = pair;
         let (key_s, key_e) = (start.name, end.name);
