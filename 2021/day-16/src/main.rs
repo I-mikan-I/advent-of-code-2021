@@ -1,25 +1,23 @@
 use crate::Packet::Operator;
 use itertools::Itertools;
-use nom::bytes::complete::{take, take_while};
+use nom::bytes::complete::take;
 use nom::character::complete::char;
 use nom::combinator::map_res;
-use nom::error::ErrorKind::Fail;
-use nom::error::FromExternalError;
-use nom::multi::{many0, many1, many_m_n};
-use nom::sequence::{preceded, terminated};
-use nom::IResult;
+use nom::multi::{many0, many_m_n};
+use nom::sequence::preceded;
+use nom::{Finish, IResult};
 use std::path::Path;
 
 #[derive(Debug)]
 enum Packet {
     Literal(usize),
-    Operator(Vec<Packet>),
+    Operator(Vec<PacketWrapper>),
 }
 
-static mut VER_COUNT: usize = 0;
+#[derive(Debug)]
+struct PacketWrapper(u8, u8, Packet);
 
 fn parse_operator(input: &str) -> IResult<&str, Packet> {
-    println!("got operator: {}", input);
     let (input, len_type_id) = map_res(take(1_usize), |bit| {
         if bit == "1" {
             std::result::Result::<bool, ()>::Ok(true)
@@ -39,31 +37,24 @@ fn parse_operator(input: &str) -> IResult<&str, Packet> {
 }
 
 fn parse_literal(input: &str) -> IResult<&str, Packet> {
-    println!("got literal: {}", input);
     let (input, begin) = many0(preceded(char('1'), take(4_usize)))(input)?;
     let (input, end) = preceded(char('0'), take(4_usize))(input)?;
     let result = begin.into_iter().chain(std::iter::once(end)).join("");
-    println!("got result: {:?}", result);
     let result = usize::from_str_radix(&result, 2).unwrap();
-    println!("got number: {}", result);
     Ok((input, Packet::Literal(result)))
 }
 
-fn parse_packet(input: &str) -> IResult<&str, Packet> {
-    println!("got packet: {}", input);
+fn parse_packet(input: &str) -> IResult<&str, PacketWrapper> {
     let (input, version) = map_res(take(3_usize), |s| u8::from_str_radix(s, 2))(input)?;
     let (input, type_id) = map_res(take(3_usize), |s| u8::from_str_radix(s, 2))(input)?;
-    println!("Version: {}", version);
-    unsafe {
-        VER_COUNT += version as usize;
-    }
     if type_id == 4 {
-        let res = parse_literal(input);
-        res
+        nom::combinator::map(parse_literal, |packet| {
+            PacketWrapper(version, type_id, packet)
+        })(input)
     } else {
-        //let res = terminated(parse_operator, take_while::<_, &str, _>(|c| c == '0'))(input);
-        let res = parse_operator(input);
-        res
+        nom::combinator::map(parse_operator, |packet| {
+            PacketWrapper(version, type_id, packet)
+        })(input)
     }
 }
 
@@ -79,16 +70,42 @@ fn main() {
 }
 
 fn ex_01(input: &str) {
-    let hex: Vec<u8> = input
-        .trim()
-        .chars()
-        .map(|c| c.to_digit(16).unwrap() as u8)
-        .collect();
+    let hex_iter = input.trim().chars().map(|c| c.to_digit(16).unwrap() as u8);
 
-    let binary = hex.into_iter().map(|num| format!("{:0>4b}", num)).join("");
-    //let binary = "00111000000000000110111101000101001010010001001000000000";
-    let packets = parse_packet(&binary);
-    println!("{}", binary);
-    println!("{:?}", packets.unwrap_or_else(|_| panic!()));
-    unsafe { println!("{}", VER_COUNT) }
+    let binary = hex_iter.map(|num| format!("{:0>4b}", num)).join("");
+    let packets = parse_packet(&binary)
+        .finish()
+        .unwrap_or_else(|e: nom::error::Error<&str>| panic!("{:?}", e))
+        .1;
+    let version_sum = packet_sum(&packets);
+    println!("version sum: {}", version_sum);
+    let result = calculate(&packets);
+    println!("result: {}", result);
+}
+
+fn packet_sum(packet: &PacketWrapper) -> usize {
+    match &packet.2 {
+        Packet::Literal(_) => packet.0 as usize,
+        Packet::Operator(vec) => packet.0 as usize + vec.iter().map(packet_sum).sum::<usize>(),
+    }
+}
+
+fn calculate(packet: &PacketWrapper) -> usize {
+    match &packet {
+        PacketWrapper(_, _, Packet::Literal(val)) => *val,
+        PacketWrapper(_, 0, Packet::Operator(vec)) => vec.iter().map(calculate).sum::<usize>(),
+        PacketWrapper(_, 1, Packet::Operator(vec)) => vec.iter().map(calculate).product::<usize>(),
+        PacketWrapper(_, 2, Packet::Operator(vec)) => vec.iter().map(calculate).min().unwrap(),
+        PacketWrapper(_, 3, Packet::Operator(vec)) => vec.iter().map(calculate).max().unwrap(),
+        PacketWrapper(_, 5, Packet::Operator(vec)) => {
+            (calculate(&vec[0]) > calculate(&vec[1])) as usize
+        }
+        PacketWrapper(_, 6, Packet::Operator(vec)) => {
+            (calculate(&vec[0]) < calculate(&vec[1])) as usize
+        }
+        PacketWrapper(_, 7, Packet::Operator(vec)) => {
+            (calculate(&vec[0]) == calculate(&vec[1])) as usize
+        }
+        _ => panic!("unknown packet"),
+    }
 }
