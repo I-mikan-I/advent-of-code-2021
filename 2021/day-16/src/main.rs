@@ -62,7 +62,7 @@ fn main() {
     let path = if let Some(x) = std::env::args().nth(1) {
         x
     } else {
-        "2021/day-15/input-test".to_string()
+        "2021/day-16/input-test".to_string()
     };
     let path = Path::new(&path);
     let contents = std::fs::read_to_string(path).unwrap();
