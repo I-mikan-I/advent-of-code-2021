@@ -16,21 +16,28 @@ fn main() {
         .split("\n\n")
         .map(|str| Scanner::from_str(str).unwrap())
         .collect();
-    let mut found = vec![scanners.remove(0)];
+    let mut found = vec![];
+    let mut worklist = vec![scanners.remove(0)];
 
-    while !scanners.is_empty() {
+    while !scanners.is_empty() || !worklist.is_empty() {
         let mut to_add = Vec::new();
-        'outer: for s0 in &mut found {
-            for s1 in 0..scanners.len() {
-                if s0.orient(scanners.get_mut(s1).unwrap()) {
-                    let tmp = scanners.remove(s1);
-                    println!("============> FIXATED <===========\n{}\n{:?}", &tmp.name, &tmp.offset);
+        for mut s0 in worklist {
+            let mut i = 0;
+            while i < scanners.len() {
+                if s0.orient(scanners.get_mut(i).unwrap()) {
+                    let tmp = scanners.remove(i);
+                    println!(
+                        "============> FIXATED <===========\n{}\n{:?}",
+                        &tmp.name, &tmp.offset
+                    );
                     to_add.push(tmp);
-                    break 'outer;
+                } else {
+                    i += 1;
                 }
             }
+            found.push(s0);
         }
-        found.append(&mut to_add);
+        worklist = to_add;
     }
     let complete = found
         .iter_mut()
@@ -265,7 +272,7 @@ impl Display for Scanner {
         for beacon in &self.view {
             writeln!(f, "{},{},{}", beacon.x, beacon.y, beacon.z)?;
         }
-        writeln!(f,)
+        writeln!(f)
     }
 }
 
