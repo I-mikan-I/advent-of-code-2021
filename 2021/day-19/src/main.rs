@@ -23,15 +23,14 @@ fn main() {
         'outer: for s0 in &mut found {
             for s1 in 0..scanners.len() {
                 if s0.orient(scanners.get_mut(s1).unwrap()) {
-                    to_add.push(scanners.remove(s1));
+                    let tmp = scanners.remove(s1);
+                    println!("============> FIXATED <===========\n{}\n{:?}", &tmp.name, &tmp.offset);
+                    to_add.push(tmp);
                     break 'outer;
                 }
             }
         }
         found.append(&mut to_add);
-    }
-    for scanner in &found {
-        println!("{}", scanner)
     }
     let complete = found
         .iter_mut()
