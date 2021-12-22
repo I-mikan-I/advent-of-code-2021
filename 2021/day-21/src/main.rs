@@ -77,40 +77,33 @@ fn ex_02(player1: usize, player2: usize) -> usize {
         let mut scores_t = scores;
         for i in 0..GOAL {
             for k in 0..GOAL {
-                if rotation {
-                    for j in 0..BOARD_SIZE {
-                        let new_positions = rolls
-                            .iter()
-                            .map(|roll| (j + roll) % BOARD_SIZE)
-                            .collect::<Vec<_>>();
-                        for l in 0..BOARD_SIZE {
-                            for &np in &new_positions {
+                for j in 0..BOARD_SIZE {
+                    let new_positions = rolls
+                        .iter()
+                        .map(|roll| (j + roll) % BOARD_SIZE)
+                        .collect::<Vec<_>>();
+                    for l in 0..BOARD_SIZE {
+                        for &np in &new_positions {
+                            if rotation {
                                 let new_score = i + np + 1;
                                 if new_score >= GOAL {
                                     p1_wins += scores[i][k][j][l];
                                 } else {
                                     scores_t[new_score][k][np][l] += scores[i][k][j][l];
                                 }
-                            }
-                            scores_t[i][k][j][l] -= scores[i][k][j][l];
-                        }
-                    }
-                } else {
-                    for l in 0..BOARD_SIZE {
-                        let new_positions = rolls
-                            .iter()
-                            .map(|roll| (l + roll) % BOARD_SIZE)
-                            .collect::<Vec<_>>();
-                        for j in 0..BOARD_SIZE {
-                            for &np in &new_positions {
+                            } else {
                                 let new_score = k + np + 1;
                                 if new_score >= GOAL {
-                                    p2_wins += scores[i][k][j][l];
+                                    p2_wins += scores[i][k][l][j];
                                 } else {
-                                    scores_t[i][new_score][j][np] += scores[i][k][j][l];
+                                    scores_t[i][new_score][l][np] += scores[i][k][l][j];
                                 }
                             }
+                        }
+                        if rotation {
                             scores_t[i][k][j][l] -= scores[i][k][j][l];
+                        } else {
+                            scores_t[i][k][l][j] -= scores[i][k][l][j];
                         }
                     }
                 }
